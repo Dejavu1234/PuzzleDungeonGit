@@ -35,9 +35,14 @@ public:
 	TArray<UStaticMeshComponent*> Tiles;
 
 	UFUNCTION(BlueprintCallable)
+	void SavePuzzleConfig();
+	UFUNCTION(BlueprintCallable)
 	void FlipTiles(UStaticMeshComponent* ClickedTile);
 
-private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Config")
+	TArray<int> PuzzleConfig;
 
-	
+private:
+	TArray<int> FlipHistory;	
+	void SetupPuzzle();
 };

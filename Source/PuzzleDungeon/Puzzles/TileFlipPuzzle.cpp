@@ -15,6 +15,7 @@ void ATileFlipPuzzle::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	SetupPuzzle();
 }
 
 // Called every frame
@@ -22,6 +23,19 @@ void ATileFlipPuzzle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ATileFlipPuzzle::SetupPuzzle()
+{
+	for (auto itr : PuzzleConfig)
+	{
+		FlipTiles(Tiles[itr]);
+	}
+}
+
+void ATileFlipPuzzle::SavePuzzleConfig()
+{
+	PuzzleConfig = FlipHistory;
 }
 
 void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile)
@@ -59,5 +73,8 @@ void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile)
 			Tiles[itr]->AddRelativeRotation(FRotator(0.0f, 0.0f, 180.0f));
 		}
 	}
+
+	// Take note of flip for history
+	FlipHistory.Add(Index);
 }
 
