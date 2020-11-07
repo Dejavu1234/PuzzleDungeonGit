@@ -34,7 +34,7 @@ void ATileFlipPuzzle::SetupPuzzle()
 {
 	for (auto itr : PuzzleConfig)
 	{
-		FlipTiles(TileArray[itr.X][itr.Y]);
+		FlipTiles(TileArray[itr.X][itr.Y], true);
 	}
 }
 
@@ -119,43 +119,73 @@ void ATileFlipPuzzle::SavePuzzleConfig()
 	}	
 }
 
-void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile)
+void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile, bool bInstantRotate = false)
 {
+	// Dont allow flipping if we're mid interp of tiles
+	if (bFlippingTiles)
+	{
+		return;
+	}
+
 	int x = -1;
 	int y = -1;
 
+	// Get the x & y of the tile that was clicked
 	FindTileInArray(x, y, ClickedTile);
 	if (x == -1 || y == -1)
 	{
 		return;
 	}
 
-	TArray<FVector2D> TilesToFlip;
+	TArray<FVector2D> TileIndices;
 
 	// Add all adjacent to array
 	for (int i = -1; i <= 1; ++i)
 	{
 		for (int j = -1; j <= 1; ++j)
 		{
-			TilesToFlip.Add(FVector2D(y + i, x + j));
+			TileIndices.Add(FVector2D(y + i, x + j));
 		}
 	}
 
-	for (auto Tile : TilesToFlip)
+	// Store a container of valid tiles to be flipped
+	TilesToRotate.Empty();
+	TargetTileRotations.Empty();
+	InitialTileRotations.Empty();
+	for (auto Tile : TileIndices)
 	{
+		// Only flip tiles if they're valid
 		if (CheckIfValidIndex(Tile))
 		{
-			UStaticMeshComponent* TileStaticMesh = TileArray[Tile.X][Tile.Y];
+			UStaticMeshComponent* TileStaticMesh = TileArray[Tile.X][Tile.Y];		
+			TilesToRotate.Add(TileStaticMesh);
+
+			// Store the initial and target rotation for this tile
+			InitialTileRotations.Add(TileStaticMesh->GetRelativeRotation());
 			if (TileStaticMesh->GetRelativeRotation() == FRotator::ZeroRotator)
 			{
-				TileStaticMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 180.0f));
+				TargetTileRotations.Add(FRotator(0.0f, 0.0f, 180.0f));
 			}
 			else
 			{
-				TileStaticMesh->SetRelativeRotation(FRotator::ZeroRotator);
+				TargetTileRotations.Add(FRotator::ZeroRotator);
+			}
+
+			// Apply rotation now if we're doing an instant rotation
+			if (bInstantRotate)
+			{				
+				TileStaticMesh->SetRelativeRotation(TargetTileRotations[TargetTileRotations.Num() - 1]);				
 			}
 		}
 	}	
+
+	if (!bInstantRotate)
+	{
+		// Call blueprint override function to rotate tiles
+		InterpTileRotation();
+		bFlippingTiles = true;
+	}
+	
 
 	// Take note of flip for history
 	FlipHistory.Add(FVector2D(x, y));
@@ -166,4 +196,3 @@ void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile)
 		UKismetSystemLibrary::PrintString(GetWorld(), "Puzzle Complete");
 	}	
 }
-

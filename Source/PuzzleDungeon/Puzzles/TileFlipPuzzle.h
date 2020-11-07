@@ -42,10 +42,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SavePuzzleConfig();
 	UFUNCTION(BlueprintCallable)
-	void FlipTiles(UStaticMeshComponent* ClickedTile);
+	void FlipTiles(UStaticMeshComponent* ClickedTile, bool bInstantRotate);
+	UFUNCTION(BlueprintImplementableEvent)
+    void InterpTileRotation();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Config")
 	TArray<FVector2D> PuzzleConfig;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<UStaticMeshComponent*> TilesToRotate;
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FRotator> InitialTileRotations;
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FRotator> TargetTileRotations;
+	UPROPERTY(BlueprintReadWrite)
+	bool bFlippingTiles;
 
 private:
 	TArray<TArray<UStaticMeshComponent*>> TileArray;
