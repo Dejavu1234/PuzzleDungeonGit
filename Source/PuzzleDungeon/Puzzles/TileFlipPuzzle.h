@@ -24,6 +24,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	void ConstructTiles();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customization")
 	UStaticMesh* TileMesh;
@@ -33,6 +36,8 @@ public:
 	int Columns;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customization")
 	TArray<UStaticMeshComponent*> Tiles;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Customization")
+	bool bConfiguringPuzzle;
 
 	UFUNCTION(BlueprintCallable)
 	void SavePuzzleConfig();
@@ -40,9 +45,14 @@ public:
 	void FlipTiles(UStaticMeshComponent* ClickedTile);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Config")
-	TArray<int> PuzzleConfig;
+	TArray<FVector2D> PuzzleConfig;
 
 private:
-	TArray<int> FlipHistory;	
+	TArray<TArray<UStaticMeshComponent*>> TileArray;
+
+	TArray<FVector2D> FlipHistory;	
 	void SetupPuzzle();
+	void FindTileInArray(int& _x, int& _y, UStaticMeshComponent* Tile);
+	bool CheckIfValidIndex(FVector2D index);
+	bool CheckPuzzleComplete();
 };

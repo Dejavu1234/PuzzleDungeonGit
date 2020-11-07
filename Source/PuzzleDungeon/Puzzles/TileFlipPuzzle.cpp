@@ -2,6 +2,7 @@
 
 
 #include "TileFlipPuzzle.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ATileFlipPuzzle::ATileFlipPuzzle()
@@ -14,67 +15,155 @@ ATileFlipPuzzle::ATileFlipPuzzle()
 void ATileFlipPuzzle::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ConstructTiles();
 	
-	SetupPuzzle();
+	if (!bConfiguringPuzzle)
+	{
+		SetupPuzzle();
+	}	
 }
 
 // Called every frame
 void ATileFlipPuzzle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ATileFlipPuzzle::SetupPuzzle()
 {
 	for (auto itr : PuzzleConfig)
 	{
-		FlipTiles(Tiles[itr]);
+		FlipTiles(TileArray[itr.X][itr.Y]);
+	}
+}
+
+void ATileFlipPuzzle::FindTileInArray(int& _x, int& _y, UStaticMeshComponent* Tile)
+{
+	for (int y = 0; y < Rows; ++y)
+	{
+		for (int x = 0; x < Columns; ++x)
+		{
+			if (TileArray[y][x] == Tile)
+			{
+				_x = x;
+				_y = y;
+				return;
+			}
+		}
+	}
+}
+
+bool ATileFlipPuzzle::CheckIfValidIndex(FVector2D index)
+{
+	if (index.X >= 0 && index.X < Rows && index.Y >= 0 && index.Y < Columns)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool ATileFlipPuzzle::CheckPuzzleComplete()
+{
+	for (auto Row : TileArray)
+	{
+		for (auto Column : Row)
+		{
+			if (Column->GetRelativeRotation().Roll != 0.0f)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+void ATileFlipPuzzle::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	ConstructTiles();
+}
+
+void ATileFlipPuzzle::ConstructTiles()
+{
+	for (int y = 0; y < Rows; ++y)
+	{
+		TArray<UStaticMeshComponent*> TileRow;
+		for (int x = 0; x < Columns; ++x)
+		{
+			UStaticMeshComponent* NewComponent = NewObject<UStaticMeshComponent>(this, NAME_None, RF_Transient);
+			NewComponent->AttachTo(RootComponent);
+			NewComponent->RegisterComponent();
+			NewComponent->SetStaticMesh(TileMesh);
+			NewComponent->CreationMethod = EComponentCreationMethod::SimpleConstructionScript;
+
+			FTransform RelativeTransform = FTransform(FVector(x * 205.0f, y * 205.0f, 0.0f));
+			NewComponent->SetRelativeTransform(RelativeTransform);
+
+			TileRow.Add(NewComponent);
+		}
+		TileArray.Add(TileRow);
 	}
 }
 
 void ATileFlipPuzzle::SavePuzzleConfig()
 {
-	PuzzleConfig = FlipHistory;
+	if (bConfiguringPuzzle)
+	{
+		PuzzleConfig = FlipHistory;
+	}	
 }
 
 void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile)
 {
-	int Index = Tiles.Find(ClickedTile);
-	if (Index == -1)
+	int x = -1;
+	int y = -1;
+
+	FindTileInArray(x, y, ClickedTile);
+	if (x == -1 || y == -1)
 	{
 		return;
 	}
 
-	TArray<int> TilesToFlip = { Index };
+	TArray<FVector2D> TilesToFlip;
 
-	// Above
-	TilesToFlip.Add(Index + 1);
-
-	// Below
-	TilesToFlip.Add(Index - 1);
-
-	// BottomRight
-	TilesToFlip.Add(Index + Columns);
-
-	// TopLeft
-	TilesToFlip.Add(Index - Columns);
-
-	TilesToFlip.Add(Index + Columns + 1);
-	TilesToFlip.Add(Index + Columns + 2);
-
-	TilesToFlip.Add(Index - Columns - 1);
-	TilesToFlip.Add(Index - Columns - 2);
-
-	for (auto itr : TilesToFlip)
+	// Add all adjacent to array
+	for (int i = -1; i <= 1; ++i)
 	{
-		if (itr >= 0 && itr < Tiles.Num())
+		for (int j = -1; j <= 1; ++j)
 		{
-			Tiles[itr]->AddRelativeRotation(FRotator(0.0f, 0.0f, 180.0f));
+			TilesToFlip.Add(FVector2D(y + i, x + j));
 		}
 	}
 
+	for (auto Tile : TilesToFlip)
+	{
+		if (CheckIfValidIndex(Tile))
+		{
+			UStaticMeshComponent* TileStaticMesh = TileArray[Tile.X][Tile.Y];
+			if (TileStaticMesh->GetRelativeRotation() == FRotator::ZeroRotator)
+			{
+				TileStaticMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 180.0f));
+			}
+			else
+			{
+				TileStaticMesh->SetRelativeRotation(FRotator::ZeroRotator);
+			}
+		}
+	}	
+
 	// Take note of flip for history
-	FlipHistory.Add(Index);
+	FlipHistory.Add(FVector2D(x, y));
+
+	// Check if the puzzle has been solved
+	if (CheckPuzzleComplete())
+	{
+		UKismetSystemLibrary::PrintString(GetWorld(), "Puzzle Complete");
+	}	
 }
 
