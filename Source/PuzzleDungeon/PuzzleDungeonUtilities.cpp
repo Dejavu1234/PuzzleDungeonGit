@@ -3,6 +3,8 @@
 
 #include "PuzzleDungeonUtilities.h"
 #include "Engine/World.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 
 FHitResult UPuzzleDungeonUtilities::TraceFromMouse(APlayerController* PlayerController, ECollisionChannel CollisionChannel)
 {
@@ -14,4 +16,30 @@ FHitResult UPuzzleDungeonUtilities::TraceFromMouse(APlayerController* PlayerCont
 	WorldPtr->LineTraceSingleByChannel(OutHit, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), CollisionChannel);
 
 	return OutHit;
+}
+
+TArray<TArray<UStaticMeshComponent*>> UPuzzleDungeonUtilities::AddStaticMeshGrid(UObject* Actor, USceneComponent* ParentComponent, UStaticMesh* Mesh, FString ComponentName, int Rows, int Columns, float HorizontalOffset, float VerticalOffset)
+{
+	TArray<TArray<UStaticMeshComponent*>> StaticMeshGrid;
+	for (int y = 0; y < Rows; ++y)
+	{
+		TArray<UStaticMeshComponent*> StaticMeshRow;
+		for (int x = 0; x < Columns; ++x)
+		{
+			FName NewName = *(ComponentName + "_" + FString::FromInt(x) + "_" + FString::FromInt(y));
+			UStaticMeshComponent* NewComponent = NewObject<UStaticMeshComponent>(Actor, NewName, RF_Transient);
+			NewComponent->AttachTo(ParentComponent);
+			NewComponent->RegisterComponent();
+			NewComponent->SetStaticMesh(Mesh);
+			NewComponent->CreationMethod = EComponentCreationMethod::SimpleConstructionScript;
+
+			FTransform RelativeTransform = FTransform(FVector(x * HorizontalOffset, y * VerticalOffset, 0.0f));
+			NewComponent->SetRelativeTransform(RelativeTransform);
+
+			StaticMeshRow.Add(NewComponent);
+		}
+		StaticMeshGrid.Add(StaticMeshRow);
+	}
+
+	return StaticMeshGrid;
 }
