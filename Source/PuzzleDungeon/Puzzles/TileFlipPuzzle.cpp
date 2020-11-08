@@ -79,6 +79,7 @@ bool ATileFlipPuzzle::CheckPuzzleComplete()
 		}
 	}
 
+	OnPuzzleComplete.Broadcast(true, Clicks - PuzzleConfig.Num());
 	return true;
 }
 
@@ -139,6 +140,8 @@ void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile, bool bInstant
 
 	TArray<FVector2D> TileIndices;
 
+	Clicks++;
+
 	// Add all adjacent to array
 	for (int i = -1; i <= 1; ++i)
 	{
@@ -184,15 +187,8 @@ void ATileFlipPuzzle::FlipTiles(UStaticMeshComponent* ClickedTile, bool bInstant
 		// Call blueprint override function to rotate tiles
 		InterpTileRotation();
 		bFlippingTiles = true;
-	}
-	
+	}	
 
 	// Take note of flip for history
-	FlipHistory.Add(FVector2D(x, y));
-
-	// Check if the puzzle has been solved
-	if (CheckPuzzleComplete())
-	{
-		UKismetSystemLibrary::PrintString(GetWorld(), "Puzzle Complete");
-	}	
+	FlipHistory.Add(FVector2D(x, y));	
 }

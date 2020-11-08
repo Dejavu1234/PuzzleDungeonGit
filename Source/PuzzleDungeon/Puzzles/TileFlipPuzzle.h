@@ -58,6 +58,16 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	bool bFlippingTiles;
 
+	UPROPERTY(BlueprintReadWrite)
+	int Clicks;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPuzzleComplete, bool, Success, float, Score);
+	UPROPERTY(BlueprintAssignable)
+	FOnPuzzleComplete OnPuzzleComplete;
+
+	UFUNCTION(BlueprintCallable)
+	bool CheckPuzzleComplete();
+
 private:
 	TArray<TArray<UStaticMeshComponent*>> TileArray;
 
@@ -65,5 +75,5 @@ private:
 	void SetupPuzzle();
 	void FindTileInArray(int& _x, int& _y, UStaticMeshComponent* Tile);
 	bool CheckIfValidIndex(FVector2D index);
-	bool CheckPuzzleComplete();
+	
 };

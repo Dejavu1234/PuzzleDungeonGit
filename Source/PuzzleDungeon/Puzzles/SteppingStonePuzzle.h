@@ -26,6 +26,38 @@ public:
 public:
 	void OnConstruction(const FTransform& Transform) override;
 
+	UFUNCTION(BlueprintCallable)
+	bool OnTileClicked(UStaticMeshComponent* Mesh);
+
+	bool CheckPuzzleComplete();
+
+	UFUNCTION(BlueprintCallable)
+	UStaticMeshComponent* GetTile(FVector2D Index);	
+
 	UPROPERTY(EditAnywhere, Category = "Customization")
 	UStaticMesh* StaticMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Customization")
+	int Rows;
+
+	UPROPERTY(EditAnywhere, Category = "Customization")
+	int Columns;
+
+	UPROPERTY(EditAnywhere, Category = "Customization")
+	bool bRecordingPuzzle;
+
+	UPROPERTY(BlueprintReadWrite)
+	int Clicks;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Customization")
+	TArray<FVector2D> PuzzleConfig;
+		
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPuzzleComplete, bool, Success, float, Score);
+	UPROPERTY(BlueprintAssignable)
+	FOnPuzzleComplete OnPuzzleComplete;
+
+private:
+	TArray<TArray<UStaticMeshComponent*>> TileArray;
+	TArray<bool> TileClicked;
+	int IsIndexOnPath(FVector2D index);
 };

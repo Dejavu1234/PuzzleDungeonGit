@@ -43,3 +43,19 @@ TArray<TArray<UStaticMeshComponent*>> UPuzzleDungeonUtilities::AddStaticMeshGrid
 
 	return StaticMeshGrid;
 }
+
+void UPuzzleDungeonUtilities::GetStaticMeshIndex(int& _x, int& _y, int Rows, int Columns, UStaticMeshComponent* StaticMesh, TArray<TArray<UStaticMeshComponent*>> Container)
+{
+	for (int y = 0; y < Rows; ++y)
+	{
+		for (int x = 0; x < Columns; ++x)
+		{
+			if (Container[y][x] == StaticMesh)
+			{
+				_x = x;
+				_y = y;
+				return;
+			}
+		}
+	}
+}
