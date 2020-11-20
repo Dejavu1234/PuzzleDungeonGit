@@ -59,3 +59,11 @@ void UPuzzleDungeonUtilities::GetStaticMeshIndex(int& _x, int& _y, int Rows, int
 		}
 	}
 }
+
+bool UPuzzleDungeonUtilities::GetPointIsBehindObject(USceneComponent* Object, FVector Point)
+{
+	FVector ObjectForward = Object->GetForwardVector();
+	FVector ObjectToPoint = (Point - Object->GetComponentLocation()).GetSafeNormal();
+	float DotProduct = FVector::DotProduct(ObjectForward, ObjectToPoint);
+	return DotProduct < 0.0f;
+}
